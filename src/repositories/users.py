@@ -2,7 +2,7 @@ from utils.repository import SQLAlchemyRepository
 
 from db.models.users import User
 
-class UserRepository(SQLAlchemyRepository):
+class UsersRepository(SQLAlchemyRepository):
     model = User
 
     

@@ -1,11 +1,18 @@
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import (
+    relationship,
+    Mapped,
+    mapped_column,
+    )
+from sqlalchemy import (
+    BigInteger
+)
 from db.db import Base
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id: Mapped[int]
+    tg_id = mapped_column(BigInteger, unique=True)
     tg_username: Mapped[str | None]
     tg_fullname: Mapped[str]
     fullname: Mapped[str]

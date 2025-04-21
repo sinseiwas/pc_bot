@@ -1,6 +1,8 @@
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import Message
+from utils.unitofwork import UnitOfWork
+
 
 class MessageMiddleware(BaseMiddleware):
     async def __call__(
@@ -9,4 +11,8 @@ class MessageMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any]
     ) -> Any:
-        pass
+        uow = UnitOfWork()
+        data["uow"] = uow
+
+
+        await handler(event, data)

@@ -1,7 +1,7 @@
-from src.utils.repository import SQLAlchemyRepository
+from utils.repository import SQLAlchemyRepository
 
 from db.models.requests import Request
 
 
-class RequestRepository(SQLAlchemyRepository):
+class RequestsRepository(SQLAlchemyRepository):
     model = Request

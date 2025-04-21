@@ -5,8 +5,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from schemas.users import AddUserSchema
-from repositories.users import UserRepository
-
+from repositories.users import UsersRepository
+from utils.unitofwork import UnitOfWork
+from services.users import UserService
 router = Router()
 
 
@@ -44,21 +45,20 @@ async def add_link(msg: Message, state: FSMContext):
 
 
 @router.message(RegistrationStates.phone_number)
-async def add_phone(msg: Message, state: FSMContext):
+async def add_phone(msg: Message, uow: UnitOfWork, state: FSMContext):
     await state.update_data(phone_number=msg.text)
     data = await state.get_data()
     try:
-        user_dict = AddUserSchema(
+        user = AddUserSchema(
             tg_id=msg.from_user.id,
             tg_username=msg.from_user.username,
             tg_fullname=msg.from_user.full_name,
             fullname=data["fullname"],
             phone_number=data["phone_number"],
             vk_link=data["vk_link"]
-        ).model_dump()
+        )
 
-        user_repo = UserRepository()
-        await user_repo.add_one(data=user_dict)
+        await UserService().add_user(uow=uow, user=user)
 
         await state.clear()
 

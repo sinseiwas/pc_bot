@@ -1,15 +1,19 @@
 import asyncio
 
 from core.init_bot import dp, bot
-
 from handlers import registration
+import middlewares
 
 from db.models.requests import Request
 from db.models.users import User
 from db import db
 
+
 async def main():
     await db.create_tables()
+
+    dp.message.outer_middleware(middlewares.message_mw())
+    dp.message.outer_middleware(middlewares.callback_mw())
 
     dp.include_routers(
         registration.router,
