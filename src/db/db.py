@@ -13,6 +13,7 @@ from core import config
 engine = create_async_engine(
     url=config.settings.DATABASE_URL_asyncpg,
     echo=False,
+    # echo_pool='debug',
 )
 
 SessionFactory = async_sessionmaker(

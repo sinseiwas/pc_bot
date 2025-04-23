@@ -2,6 +2,10 @@ from pydantic import BaseModel, field_validator
 import re
 
 
+class UserIdSchema(BaseModel):
+    id: int
+
+
 class AddUserSchema(BaseModel):
     tg_id: int
     tg_username: str
@@ -15,3 +19,6 @@ class AddUserSchema(BaseModel):
         if not re.match(r'^\+7\d{10}$', value) and len(value) != 12:
             raise ValueError(f"Неверный формат номера. Ожидается 12 чисел, введено {len(value)}.\nВведите номер в формате +7XXXXXXXXXX")
         return value
+
+class UserFullSchema(AddUserSchema, UserIdSchema):
+    pass

@@ -4,63 +4,60 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+# from handlers.registration import RegistrationEditStates
 from schemas.users import AddUserSchema, UserFullSchema
-from repositories.users import UsersRepository
-from utils.unitofwork import UnitOfWork
 from services.users import UserService
+from utils.unitofwork import UnitOfWork
+
+
 router = Router()
 
-
-class RegistrationStates(StatesGroup):
-    start_reg = State()
+class RegistrationEditStates(StatesGroup):
     fullname = State()
     phone_number = State()
     vk_link = State()
 
 
-@router.message(Command("registration"))
-async def registration(msg: Message, state: FSMContext):
-    await msg.answer("Введите Ваше ФИО")
-    await state.set_state(RegistrationStates.fullname)
+@router.message(Command("update_information"))
+async def edit_user_info(msg: Message, state: FSMContext):
+    await msg.answer("Для смены информации о себе, пройдите регистрацию заново")
+    await msg.answer("Введите своё ФИО")
+    
+    await state.set_state(RegistrationEditStates.fullname)
 
 
-@router.message(RegistrationStates.start_reg)
-async def start_reg(msg: Message, state: FSMContext):
-    await msg.answer("Введите Ваше ФИО")
-    await state.set_state(RegistrationStates.fullname)
-
-@router.message(RegistrationStates.fullname)
+@router.message(RegistrationEditStates.fullname)
 async def add_fullname(msg: Message, state: FSMContext):
     user_fullname = msg.text
 
     await state.update_data(fullname=msg.text)
-    await state.set_state(RegistrationStates.vk_link)
+    await state.set_state(RegistrationEditStates.vk_link)
     
     await msg.answer(
         "Теперь отправьте ссылку на вашу страницу в Вконтакте"
     )
 
 
-@router.message(RegistrationStates.vk_link)
+@router.message(RegistrationEditStates.vk_link)
 async def add_link(msg: Message, state: FSMContext):
     user_vk_link = msg.text
 
     await state.update_data(vk_link=user_vk_link)
-    await state.set_state(RegistrationStates.phone_number)
+    await state.set_state(RegistrationEditStates.phone_number)
 
     await msg.answer(
         "Теперь отправьте ваш номер телефона в формате +7XXXXXXXXXX"
     )
 
 
-@router.message(RegistrationStates.phone_number)
-async def add_phone(msg: Message, uow: UnitOfWork, state: FSMContext):
+@router.message(RegistrationEditStates.phone_number)
+async def add_phone(msg: Message, user: UserFullSchema, uow: UnitOfWork, state: FSMContext):
     user_phone_number = msg.text
 
     await state.update_data(phone_number=user_phone_number)
     data = await state.get_data()
     try:
-        user = AddUserSchema(
+        user_add = AddUserSchema(
             tg_id=msg.from_user.id,
             tg_username=msg.from_user.username,
             tg_fullname=msg.from_user.full_name,
@@ -69,11 +66,11 @@ async def add_phone(msg: Message, uow: UnitOfWork, state: FSMContext):
             vk_link=data["vk_link"]
         )
 
-        await UserService().add_user(uow=uow, user=user)
+        await UserService().edit_user(uow=uow, id=user.id, user=user_add)
 
         await state.clear()
 
-        await msg.answer("Регистрация завершена! Спасибо за предоставленные данные.")
+        await msg.answer("Ваши данные были обновлены")
     except ValueError as e:
         print(
             f"Произошла ошибка: {e}"
@@ -81,7 +78,3 @@ async def add_phone(msg: Message, uow: UnitOfWork, state: FSMContext):
         await msg.answer(
             "Неверный формат номера. Ожидается 12 чисел.\nВведите номер в формате +7XXXXXXXXXX"
             )
-    except:
-        await msg.answer(
-            "При регистрации произошла ошибка"
-        )
